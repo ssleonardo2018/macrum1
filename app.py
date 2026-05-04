@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from supabase import create_client, Client
+from datetime import datetime
 import os
 
 
@@ -15,7 +16,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/')
 def index():
-    return redirect(url_for('login'))
+    return redirect(url_for('login.html'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -39,11 +40,11 @@ def login():
 
             # Redirecionamento baseado no grupo
             if user_role == 'admin':
-                return redirect(url_for('admin_dashboard'))
+                return redirect(url_for('admin.html'))
             elif user_role == 'nutricionista':
-                return redirect(url_for('nutri_dashboard'))
+                return redirect(url_for('nutricionista.html'))
             else:
-                return redirect(url_for('paciente_dashboard'))
+                return redirect(url_for('paciente.html'))
 
         except Exception as e:
             flash("Erro ao logar: Verifique suas credenciais.")
