@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macrum - Meus Exames</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .exame-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .btn-download {
+            background: var(--primary);
+            color: white;
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        .btn-download:hover { background: var(--secondary); }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container" style="max-width: 800px;">
+        <header style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>📁 Meus Exames</h1>
+            <a href="/dashboard/paciente" style="text-decoration: none; color: var(--dark);">← Voltar</a>
+        </header>
+
+        {% if erro %}
+            <p style="color: orange;">{{ erro }}</p>
+        {% endif %}
+
+        <div id="listaExames">
+            {% for exame in exames %}
+                <div class="exame-card">
+                    <div>
+                        <strong>{{ exame.nome }}</strong><br>
+                        <small style="color: #666;">Enviado em: {{ exame.data[:10] }}</small>
+                    </div>
+                    <a href="{{ exame.url }}" target="_blank" class="btn-download">⬇️ Baixar PDF</a>
+                </div>
+            {% else %}
+                <div class="card">
+                    <p>Você ainda não possui exames cadastrados pelo seu nutricionista.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

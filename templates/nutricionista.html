@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Macrum - Painel Nutricionista</title>
+    <script src="https://jsdelivr.net"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .refeicao-item { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .grid-macros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="card" style="max-width: 800px; margin-top: 20px;">
+            <h3>Minha Evolução de Peso</h3>
+            <canvas id="graficoPeso"></canvas>
+        </div>
+        <h1>Cadastrar Novo Plano Alimentar</h1>
+        <form action="/salvar_plano" method="POST" id="formPlano">
+            <div class="card" style="max-width: 100%;">
+                <input type="text" name="paciente_email" placeholder="E-mail do Paciente" required>
+                <input type="text" name="titulo_plano" placeholder="Título do Plano (ex: Hipertrofia v1)" required>
+                
+                <div id="listaRefeicoes">
+                    <h3>Refeições</h3>
+                    <!-- As refeições serão inseridas aqui via JS -->
+                </div>
+
+                <button type="button" onclick="adicionarRefeicao()" style="background: #3498db; margin-bottom: 20px;">+ Adicionar Refeição</button>
+                
+                <div class="card" style="background: #f9f9f9;">
+                    <h4>Total do Dia (Estimado)</h4>
+                    <p>Calorias: <span id="totalKcal">0</span> kcal</p>
+                </div>
+
+                <input type="file" id="arquivoExame" accept=".pdf">
+                <button type="button" onclick="uploadPDF()">Subir Exame</button>
+
+
+                <button type="submit" style="margin-top: 20px;">Salvar Plano Completo</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let contadorRefeicao = 0;
+
+        function adicionarRefeicao() {
+            const div = document.createElement('div');
+            div.className = 'refeicao-item';
+            div.innerHTML = `
+                <input type="time" name="hora_${contadorRefeicao}" required>
+                <input type="text" name="nome_${contadorRefeicao}" placeholder="Ex: Almoço" required>
+                <textarea name="desc_${contadorRefeicao}" placeholder="Alimentos e quantidades..." style="width:100%"></textarea>
+                <div class="grid-macros">
+                    <input type="number" class="calc" name="carb_${contadorRefeicao}" placeholder="Carbs (g)" oninput="calcularMacros()">
+                    <input type="number" class="calc" name="prot_${contadorRefeicao}" placeholder="Prot (g)" oninput="calcularMacros()">
+                    <input type="number" class="calc" name="gord_${contadorRefeicao}" placeholder="Gord (g)" oninput="calcularMacros()">
+                </div>
+            `;
+            document.getElementById('listaRefeicoes').appendChild(div);
+            contadorRefeicao++;
+        }
+
+        // Cálculo de Macros
+        function calcularMacros() {
+            let totalCarb = 0;
+            let totalProt = 0;
+            let totalGord = 0;
+
+            // Pega todos os inputs de macros
+            const inputs = document.querySelectorAll('.calc');
+            
+            inputs.forEach(input => {
+                const valor = parseFloat(input.value) || 0;
+                if (input.name.includes('carb')) totalCarb += valor;
+                if (input.name.includes('prot')) totalProt += valor;
+                if (input.name.includes('gord')) totalGord += valor;
+            });
+
+            // Fórmula: (C*4) + (P*4) + (G*9)
+            const kcal = (totalCarb * 4) + (totalProt * 4) + (totalGord * 9);
+            document.getElementById('totalKcal').innerText = kcal.toFixed(0);
+        }
+
+        const ctx = document.getElementById('graficoPeso').getContext('2d');
+    
+    // Dados que virão do banco de dados (exemplo estático)
+        const dadosPeso = [85, 83.5, 82, 81.2, 80.5];
+        const datas = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'];
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: datas,
+                    datasets: [{
+                        label: 'Peso (kg)',
+                        data: dadosPeso,
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+
+            async function uploadPDF() {
+            const file = document.getElementById('arquivoExame').files[0];
+            const userEmail = document.getElementsByName('paciente_email')[0].value;
+            
+            const filePath = `exames/${userEmail}/${Date.now()}.pdf`;
+            
+            const { data, error } = await supabase.storage
+                .from('exames')
+                .upload(filePath, file);
+
+            if (error) alert("Erro no upload");
+            else alert("PDF enviado com sucesso!");
+        }
+
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Paciente</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="card" style="max-width: 800px;">
+            <h2>Minha Dieta: {{ plano.titulo if plano else 'Nenhum plano ativo' }}</h2>
+            
+            {% for ref in refeicoes %}
+            <div style="border-bottom: 1px solid #eee; padding: 15px; text-align: left;">
+                <strong>{{ ref.horario }} - {{ ref.nome_refeicao }}</strong>
+                <p>{{ ref.alimentos }}</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="card" style="max-width: 800px;">
+            <h2>Bem-vindo, Paciente! 👋</h2>
+            <hr>
+            <p>Aqui você pode ver sua dieta e progresso.</p>
+            <a href="/logout" style="color: red; text-decoration: none;">Sair do sistema</a>
+        </div>
+    </div>
+</body>
+</html>

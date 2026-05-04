@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macrum - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="card">
+        <h1>🍎 Macrum</h1>
+        <p>Sistema de Nutrição</p>
+        <form method="POST">
+            <input type="email" name="email" placeholder="Seu Email" required>
+            <input type="password" name="password" placeholder="Sua Senha" required>
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+</body>
+</html>
