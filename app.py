@@ -22,35 +22,44 @@ def login():
         password = request.form.get('password')
 
         try:
+           @app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        try:
             # Tenta autenticar
             auth_response = supabase.auth.sign_in_with_password({
-                "email": email, 
+                "email": email,
                 "password": password
             })
 
-            # Verifica se o login foi bem sucedido
+            # Verifica se o login retornou um usuário válido
             if auth_response.user:
-                user_role = auth_response.user.user_metadata.get('role', 'paciente')
-                
+                # Busca a role nos metadados (garantindo que existe)
+                user_metadata = auth_response.user.user_metadata or {}
+                user_role = user_metadata.get('role', 'paciente')
+
                 # Salva na sessão
-                session['user'] = auth_response.user.id
+                session['user_id'] = auth_response.user.id
                 session['role'] = user_role
 
-                # Redirecionamento correto usando o nome das funções das rotas
+                # Redirecionamento baseado na Role
                 if user_role == 'admin':
                     return redirect(url_for('admin_dashboard'))
                 elif user_role == 'nutricionista':
                     return redirect(url_for('nutri_dashboard'))
                 else:
                     return redirect(url_for('paciente_dashboard'))
-            
-        except Exception as e:
-            # Imprime o erro real no console para você debugar
-            print(f"Erro detalhado: {e}")
-            flash("Credenciais inválidas ou erro de conexão.")
-            return redirect(url_for('login'))
 
+        except Exception as e:
+            # Se cair aqui, a senha está errada ou o usuário não existe
+            flash("E-mail ou senha incorretos.", "danger")
+            print(f"Erro de login: {e}") # Para você debugar no terminal
+            
     return render_template('login.html')
+          
 
 @app.route('/admin')
 def admin_dashboard():
