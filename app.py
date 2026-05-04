@@ -1,23 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from supabase import create_client, Client
-from datetime import datetime
 import os
 
-
 app = Flask(__name__)
-app.secret_key = os.environ.get(
-    "FLASK_SECRET_KEY", "chave-padrao-muito-segura")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "chave-padrao-muito-segura")
 
-# O Render preencherá estas variáveis automaticamente se você configurar no painel
+# Configurações do Supabase
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
 @app.route('/')
 def index():
-    return redirect(url_for('login.html'))
-
+    # CORREÇÃO: url_for usa o nome da FUNÇÃO (login), não o arquivo (.html)
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -26,52 +22,50 @@ def login():
         password = request.form.get('password')
 
         try:
-            # Autentica no Supabase
-            response = supabase.auth.sign_in_with_password(
-                {"email": email, "password": password})
+            # Tenta autenticar
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": email, 
+                "password": password
+            })
 
-            # Busca o grupo/role nos metadados do usuário
-            # Nota: Você deve configurar o 'role' no user_metadata ao criar o usuário
-            user_role = response.user.user_metadata.get('role', 'paciente')
+            # Verifica se o login foi bem sucedido
+            if auth_response.user:
+                user_role = auth_response.user.user_metadata.get('role', 'paciente')
+                
+                # Salva na sessão
+                session['user'] = auth_response.user.id
+                session['role'] = user_role
 
-            # Salva na sessão
-            session['user'] = response.user.id
-            session['role'] = user_role
-
-            # Redirecionamento baseado no grupo
-            if user_role == 'admin':
-                return redirect(url_for('admin.html'))
-            elif user_role == 'nutricionista':
-                return redirect(url_for('nutricionista.html'))
-            else:
-                return redirect(url_for('paciente.html'))
-
+                # Redirecionamento correto usando o nome das funções das rotas
+                if user_role == 'admin':
+                    return redirect(url_for('admin_dashboard'))
+                elif user_role == 'nutricionista':
+                    return redirect(url_for('nutri_dashboard'))
+                else:
+                    return redirect(url_for('paciente_dashboard'))
+            
         except Exception as e:
-            flash("Erro ao logar: Verifique suas credenciais.")
+            # Imprime o erro real no console para você debugar
+            print(f"Erro detalhado: {e}")
+            flash("Credenciais inválidas ou erro de conexão.")
             return redirect(url_for('login'))
 
     return render_template('login.html')
 
-
-@app.route('/dashboard/admin')
+@app.route('/admin')
 def admin_dashboard():
-    if session.get('role') != 'admin':
-        return redirect(url_for('login'))
+    if session.get('role') != 'admin': return redirect(url_for('login'))
     return render_template('admin.html')
 
-
-@app.route('/dashboard/nutricionista')
+@app.route('/nutricionista')
 def nutri_dashboard():
-    if session.get('role') != 'nutricionista':
-        return redirect(url_for('login'))
+    if session.get('role') != 'nutricionista': return redirect(url_for('login'))
     return render_template('nutricionista.html')
 
-
-@app.route('/dashboard/paciente')
+@app.route('/paciente')
 def paciente_dashboard():
-    if session.get('role') != 'paciente':
-        return redirect(url_for('login'))
-
+    if session.get('role') != 'paciente': return redirect(url_for('login'))
+    return render_template('paciente.html')
     user_id = session.get('user')
 
     # Busca o plano ativo do paciente
